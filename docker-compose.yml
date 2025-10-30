@@ -1,0 +1,31 @@
+version: "3.8"
+
+services:
+  mongo:
+    image: mongo:7
+    container_name: revision_mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    restart: unless-stopped
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: revision_app
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/booknest
+      - PORT=3000
+      - NODE_ENV=production
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mongo
+    volumes:
+      - ./uploads:/app/uploads
+    restart: unless-stopped
+
+volumes:
+  mongo_data:

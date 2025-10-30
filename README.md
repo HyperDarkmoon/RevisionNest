@@ -96,3 +96,49 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+
+## Dockerisation
+
+Ce projet est prêt à être exécuté avec Docker et Docker Compose.
+
+Deux services sont définis :
+
+- app (NestJS) — construit depuis le `Dockerfile`, expose le port 3000
+- mongo (MongoDB 7) — base de données
+
+Des volumes sont configurés pour :
+
+- les données MongoDB (volume nommé `mongo_data`)
+- les images uploadées (liaison du dossier local `./uploads` vers `/app/uploads` dans le conteneur)
+
+### Démarrer avec Docker Compose (Windows PowerShell)
+
+```powershell
+# Construire et lancer en arrière-plan
+docker compose up -d --build
+
+# Vérifier les conteneurs
+docker compose ps
+
+# Afficher les logs de l'app
+docker compose logs -f app
+```
+
+L'API est disponible sur http://localhost:3000/api et les fichiers statiques (images) sur http://localhost:3000/uploads.
+
+### Arrêter et nettoyer
+
+```powershell
+# Arrêter les services
+docker compose down
+
+# Supprimer les volumes (ATTENTION: supprime les données Mongo)
+docker compose down -v
+```
+
+### Variables importantes
+
+- `MONGO_URI` est définie dans `docker-compose.yml` vers `mongodb://mongo:27017/booknest`.
+- `PORT` est fixé à `3000` et exposé sur l'hôte.
+
+Si besoin d'autres variables, vous pouvez les ajouter dans la section `environment` du service `app` dans `docker-compose.yml`.
