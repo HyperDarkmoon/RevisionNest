@@ -8,7 +8,8 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/user.decorator';
-import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiConsumes, ApiCreatedResponse, ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { UserResponseDto } from './dto/user-response.dto';
 
 @ApiTags('users')
 @Controller('users')
@@ -30,6 +31,7 @@ export class UsersController {
       required: ['username', 'email', 'password'],
     },
   })
+  @ApiCreatedResponse({ type: UserResponseDto })
   @Post('register')
   @UseInterceptors(FileInterceptor('image', profileImageMulterOptions))
   async register(@Body() dto: CreateUserDto, @UploadedFile() file?: Express.Multer.File) {
@@ -40,6 +42,7 @@ export class UsersController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiBearerAuth()
   @Roles('admin')
+  @ApiOkResponse({ type: [UserResponseDto] })
   @Get()
   findAll() {
     return this.usersService.findAll();
@@ -47,6 +50,7 @@ export class UsersController {
 
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
+  @ApiOkResponse({ type: UserResponseDto })
   @Get('me')
   me(@CurrentUser() user: any) {
     return this.usersService.me(user.userId);
@@ -54,6 +58,7 @@ export class UsersController {
 
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
+  @ApiOkResponse({ type: UserResponseDto })
   @Patch('me/image')
   @UseInterceptors(FileInterceptor('image', profileImageMulterOptions))
   async updateImage(@CurrentUser() user: any, @UploadedFile() file: Express.Multer.File) {
@@ -63,6 +68,9 @@ export class UsersController {
 
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
+  @ApiOkResponse({ type: UserResponseDto })
+  @ApiNotFoundResponse({ description: 'User or book not found' })
+  @ApiOperation({ summary: 'Borrow a book by ID (current user)' })
   @Post('me/borrow/:bookId')
   borrow(@CurrentUser() user: any, @Param('bookId') bookId: string) {
     return this.usersService.borrowBook(user.userId, bookId);
@@ -70,6 +78,9 @@ export class UsersController {
 
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
+  @ApiOkResponse({ type: UserResponseDto })
+  @ApiNotFoundResponse({ description: 'User or book not found' })
+  @ApiOperation({ summary: 'Return a borrowed book by ID (current user)' })
   @Patch('me/return/:bookId')
   returnBook(@CurrentUser() user: any, @Param('bookId') bookId: string) {
     return this.usersService.returnBook(user.userId, bookId);
@@ -79,6 +90,8 @@ export class UsersController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiBearerAuth()
   @Roles('admin')
+  @ApiOkResponse({ schema: { example: { deleted: true } } })
+  @ApiNotFoundResponse({ description: 'User not found' })
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.usersService.remove(id);
