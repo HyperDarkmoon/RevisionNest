@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, Param, Patch, Post, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -59,9 +59,20 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOkResponse({ type: UserResponseDto })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        image: { type: 'string', format: 'binary' },
+      },
+      required: ['image'],
+    },
+  })
   @Patch('me/image')
   @UseInterceptors(FileInterceptor('image', profileImageMulterOptions))
   async updateImage(@CurrentUser() user: any, @UploadedFile() file: Express.Multer.File) {
+    if (!file) throw new BadRequestException('No image uploaded');
     const imagePath = relativeProfileImagePath(file.filename);
     return this.usersService.updateProfileImage(user.userId, imagePath);
   }
